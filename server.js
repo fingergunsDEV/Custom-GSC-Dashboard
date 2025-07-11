@@ -1,6 +1,5 @@
 const express = require('express');
 const dotenv = require('dotenv');
-const { google } = require('googleapis');
 const axios = require('axios');
 const cors = require('cors');
 
@@ -9,61 +8,40 @@ dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json());
-
-// Serve static files (e.g., HTML dashboard)
 app.use(express.static('public'));
 
-// OAuth2 Configuration
-const oauth2Client = new google.auth.OAuth2(
-  process.env.CLIENT_ID,
-  process.env.CLIENT_SECRET,
-  'http://localhost:3000/auth/callback' // Redirect URI
-);
+// Cache credentials
+let credentials = null;
 
-// Scopes
-const SCOPES = [
-  'https://www.googleapis.com/auth/analytics.readonly',
-  'https://www.googleapis.com/auth/webmasters.readonly',
-  'https://www.googleapis.com/auth/spreadsheets'
-];
-
-// Authorization URL
-app.get('/auth', (req, res) => {
-  const authUrl = oauth2Client.generateAuthUrl({
-    access_type: 'offline',
-    scope: SCOPES,
-    prompt: 'consent'
-  });
-  res.json({ authUrl });
-});
-
-// OAuth Callback
-app.get('/auth/callback', async (req, res) => {
-  const { code } = req.query;
+// Fetch credentials from Apps Script
+async function fetchCredentials() {
+  if (credentials) return credentials;
   try {
-    const { tokens } = await oauth2Client.getToken(code);
-    oauth2Client.setCredentials(tokens);
-    res.redirect('/?authorized=true');
+    const response = await axios.post(process.env.APPS_SCRIPT_URL, { action: 'getCredentials' });
+    credentials = response.data;
+    if (credentials.error) throw new Error(credentials.error);
+    return credentials;
   } catch (error) {
-    console.error('Error in OAuth callback:', error);
-    res.status(500).json({ error: 'Authentication failed' });
+    console.error('Error fetching credentials:', error.message);
+    throw new Error('Failed to fetch credentials');
   }
-});
+}
 
 // Fetch Analytics Data
 app.post('/api/fetchAnalytics', async (req, res) => {
   const { dateRange } = req.body;
   try {
+    const creds = await fetchCredentials();
     const response = await axios.post(process.env.APPS_SCRIPT_URL, {
       action: 'fetchAnalytics',
-      propertyId: process.env.PROPERTY_ID,
+      propertyId: creds.PROPERTY_ID,
       dateRange
     }, {
       headers: { 'Content-Type': 'application/json' }
     });
     res.json(response.data);
   } catch (error) {
-    console.error('Error fetching Analytics data:', error);
+    console.error('Error fetching Analytics data:', error.message);
     res.status(500).json({ error: 'Failed to fetch Analytics data' });
   }
 });
@@ -72,16 +50,17 @@ app.post('/api/fetchAnalytics', async (req, res) => {
 app.post('/api/fetchSearchConsole', async (req, res) => {
   const { dateRange } = req.body;
   try {
+    const creds = await fetchCredentials();
     const response = await axios.post(process.env.APPS_SCRIPT_URL, {
       action: 'fetchSearchConsole',
-      siteUrl: process.env.SITE_URL,
+      siteUrl: creds.SITE_URL,
       dateRange
     }, {
       headers: { 'Content-Type': 'application/json' }
     });
     res.json(response.data);
   } catch (error) {
-    console.error('Error fetching Search Console data:', error);
+    console.error('Error fetching Search Console data:', error.message);
     res.status(500).json({ error: 'Failed to fetch Search Console data' });
   }
 });
@@ -90,9 +69,10 @@ app.post('/api/fetchSearchConsole', async (req, res) => {
 app.post('/api/exportToSheet', async (req, res) => {
   const { dataType, data } = req.body;
   try {
+    const creds = await fetchCredentials();
     const response = await axios.post(process.env.APPS_SCRIPT_URL, {
       action: 'exportToSheet',
-      sheetId: process.env.SHEET_ID,
+      sheetId: creds.SHEET_ID,
       dataType,
       data
     }, {
@@ -100,7 +80,7 @@ app.post('/api/exportToSheet', async (req, res) => {
     });
     res.json(response.data);
   } catch (error) {
-    console.error('Error exporting to sheet:', error);
+    console.error('Error exporting to sheet:', error.message);
     res.status(500).json({ error: 'Failed to export data to sheet' });
   }
 });
@@ -110,7 +90,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
-```
-
-
-
