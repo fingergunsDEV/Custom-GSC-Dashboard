@@ -1501,38 +1501,20 @@
     </div>
     
     <!-- Modal for Google API Connection -->
-    <div id="apiModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg w-full max-w-md p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-xl font-medium">Connect Google API</h3>
-                <button id="closeApiModal" class="p-1 rounded-full hover:bg-gray-200">
-                    <span class="material-icon">close</span>
-                </button>
-            </div>
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Google Sheet URL</label>
-                <input id="sheetUrl" type="text" class="w-full border border-gray-300 rounded-lg p-2" placeholder="https://docs.google.com/spreadsheets/d/...">
-            </div>
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">API Key</label>
-                <input id="apiKey" type="password" class="w-full border border-gray-300 rounded-lg p-2" placeholder="Enter your API key">
-            </div>
-            <div class="mb-4">
-                <div class="flex items-center mb-2">
-                    <input type="checkbox" id="searchConsole" class="mr-2" checked>
-                    <label for="searchConsole">Google Search Console</label>
-                </div>
-                <div class="flex items-center">
-                    <input type="checkbox" id="analytics" class="mr-2" checked>
-                    <label for="analytics">Google Analytics</label>
-                </div>
-            </div>
-            <div class="flex justify-end">
-                <button id="cancelApiBtn" class="material-btn bg-gray-200 text-gray-700 px-4 py-2 mr-2">Cancel</button>
-                <button id="connectApiBtn" class="material-btn bg-primary text-white px-4 py-2">Connect</button>
-            </div>
+<div id="apiModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg w-full max-w-md p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-medium">Connect to Backend</h3>
+            <button id="closeApiModal" class="p-1 rounded-full hover:bg-gray-200">
+                <span class="material-icon">close</span>
+            </button>
+        </div>
+        <div class="flex justify-end">
+            <button id="cancelApiBtn" class="material-btn bg-gray-200 text-gray-700 px-4 py-2 mr-2">Cancel</button>
+            <button id="connectApiBtn" class="material-btn bg-primary text-white px-4 py-2">Connect</button>
         </div>
     </div>
+</div>
     
     <!-- PDF Export Preview Modal -->
     <div id="pdfPreviewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
@@ -1580,28 +1562,16 @@
         </div>
     </div>
 
-   <script>
+<script>
     // Configuration
-    const WEB_APP_URL = 'YOUR_WEB_APP_URL'; // Replace with your deployed Apps Script web app URL
+    const BACKEND_URL = 'http://localhost:3000'; // Update with your Node.js server URL
     let currentDateRange = '7d';
     let analyticsData = {};
     let searchConsoleData = {};
-    let sheetId = '';
-    let propertyId = '';
-    let siteUrl = '';
 
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
-        // Load saved credentials
-        sheetId = localStorage.getItem('sheetId') || '';
-        propertyId = localStorage.getItem('propertyId') || '';
-        siteUrl = localStorage.getItem('siteUrl') || '';
-        if (sheetId && propertyId && siteUrl) {
-            document.getElementById('sheetId').value = sheetId;
-            document.getElementById('propertyId').value = propertyId;
-            document.getElementById('siteUrl').value = siteUrl;
-            loadDashboardData();
-        }
+        loadDashboardData();
 
         // Toggle side navigation
         const menuBtn = document.getElementById('menuBtn');
@@ -1618,22 +1588,19 @@
             accountDropdownContent.classList.toggle('show');
         });
 
-        // Close dropdowns when clicking outside
+        // Close dropdowns
         window.addEventListener('click', function(event) {
             if (!event.target.closest('.dropdown')) {
-                const dropdowns = document.querySelectorAll('.dropdown-content.show');
-                dropdowns.forEach(dropdown => dropdown.classList.remove('show'));
+                document.querySelectorAll('.dropdown-content.show').forEach(dropdown => dropdown.classList.remove('show'));
             }
         });
 
         // Chart dropdowns
-        const chartDropdownBtns = document.querySelectorAll('.dropdown button .material-icon');
-        chartDropdownBtns.forEach(btn => {
+        document.querySelectorAll('.dropdown button .material-icon').forEach(btn => {
             if (btn.textContent === 'more_vert') {
                 btn.parentElement.addEventListener('click', function(event) {
                     event.stopPropagation();
-                    const content = this.nextElementSibling;
-                    content.classList.toggle('show');
+                    this.nextElementSibling.classList.toggle('show');
                 });
             }
         });
@@ -1659,19 +1626,8 @@
         }
 
         connectApiBtn.addEventListener('click', function() {
-            sheetId = document.getElementById('sheetId').value;
-            propertyId = document.getElementById('propertyId').value;
-            siteUrl = document.getElementById('siteUrl').value;
-
-            if (sheetId && propertyId && siteUrl) {
-                localStorage.setItem('sheetId', sheetId);
-                localStorage.setItem('propertyId', propertyId);
-                localStorage.setItem('siteUrl', siteUrl);
-                loadDashboardData();
-                closeApiModalFunction();
-            } else {
-                alert('Please fill in all required fields.');
-            }
+            loadDashboardData();
+            closeApiModalFunction();
         });
 
         // PDF Preview Modal
@@ -1721,10 +1677,9 @@
         });
 
         // Date range selector
-        const dateChips = document.querySelectorAll('.chip');
-        dateChips.forEach(chip => {
+        document.querySelectorAll('.chip').forEach(chip => {
             chip.addEventListener('click', function() {
-                dateChips.forEach(c => c.classList.remove('active'));
+                document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
                 this.classList.add('active');
                 currentDateRange = this.getAttribute('data-range');
                 if (currentDateRange !== 'custom') {
@@ -1734,8 +1689,7 @@
         });
 
         // Custom report builder
-        const addChartButtons = document.querySelectorAll('.add-chart');
-        addChartButtons.forEach(button => {
+        document.querySelectorAll('.add-chart').forEach(button => {
             button.addEventListener('click', function() {
                 const chartItem = this.closest('.chart-item');
                 const chartName = chartItem.querySelector('span:nth-child(2)').textContent;
@@ -1789,8 +1743,7 @@
             });
         }
 
-        const initialReportItems = document.querySelectorAll('#yourReport .report-item');
-        initialReportItems.forEach(attachReportItemListeners);
+        document.querySelectorAll('#yourReport .report-item').forEach(attachReportItemListeners);
 
         document.getElementById('saveReportBtn').addEventListener('click', function() {
             const reportItems = Array.from(document.querySelectorAll('#yourReport .report-item span:nth-child(2)')).map(span => span.textContent);
@@ -1803,15 +1756,13 @@
         });
 
         // Navigation tab switching
-        const navItems = document.querySelectorAll('.nav-item');
-        const tabContents = document.querySelectorAll('.tab-content');
-        navItems.forEach(item => {
+        document.querySelectorAll('.nav-item').forEach(item => {
             item.addEventListener('click', function(e) {
                 e.preventDefault();
                 const targetId = this.getAttribute('href').substring(1);
-                navItems.forEach(nav => nav.classList.remove('active'));
+                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
                 this.classList.add('active');
-                tabContents.forEach(content => {
+                document.querySelectorAll('.tab-content').forEach(content => {
                     content.classList.add('hidden');
                     if (content.id === targetId) {
                         content.classList.remove('hidden');
@@ -1820,16 +1771,12 @@
             });
         });
 
-        // Custom Reports tab functionality
-        const newReportBtn = document.getElementById('newReportBtn');
-        if (newReportBtn) {
-            newReportBtn.addEventListener('click', function() {
-                alert('Creating new report...');
-            });
-        }
+        // Custom Reports tab
+        document.getElementById('newReportBtn')?.addEventListener('click', function() {
+            alert('Creating new report...');
+        });
 
-        const reportActions = document.querySelectorAll('#custom-reports table button');
-        reportActions.forEach(btn => {
+        document.querySelectorAll('#custom-reports table button').forEach(btn => {
             btn.addEventListener('click', function() {
                 const icon = this.querySelector('.material-icon').textContent;
                 if (icon === 'visibility') {
@@ -1850,18 +1797,14 @@
             });
         });
 
-        // Settings form submit
-        const settingsForm = document.querySelector('#settings form');
-        if (settingsForm) {
-            settingsForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                alert('Settings saved successfully!');
-            });
-        }
+        // Settings form
+        document.querySelector('#settings form')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Settings saved successfully!');
+        });
 
         // Integration buttons
-        const integrationBtns = document.querySelectorAll('#settings .material-btn:not(#saveSettingsBtn)');
-        integrationBtns.forEach(btn => {
+        document.querySelectorAll('#settings .material-btn:not(#saveSettingsBtn)').forEach(btn => {
             btn.addEventListener('click', function() {
                 const action = this.textContent.trim();
                 const integration = this.previousElementSibling.querySelector('span:nth-child(2)').textContent;
@@ -1888,28 +1831,20 @@
     async function loadDashboardData() {
         try {
             // Fetch Analytics Data
-            const analyticsResponse = await fetch(WEB_APP_URL, {
+            const analyticsResponse = await fetch(`${BACKEND_URL}/api/fetchAnalytics`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'fetchAnalytics',
-                    propertyId: propertyId,
-                    dateRange: currentDateRange
-                })
+                body: JSON.stringify({ dateRange: currentDateRange })
             });
             const analyticsResult = await analyticsResponse.json();
             if (analyticsResult.error) throw new Error(analyticsResult.error);
             analyticsData = analyticsResult;
 
             // Fetch Search Console Data
-            const searchConsoleResponse = await fetch(WEB_APP_URL, {
+            const searchConsoleResponse = await fetch(`${BACKEND_URL}/api/fetchSearchConsole`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'fetchSearchConsole',
-                    siteUrl: siteUrl,
-                    dateRange: currentDateRange
-                })
+                body: JSON.stringify({ dateRange: currentDateRange })
             });
             const searchConsoleResult = await searchConsoleResponse.json();
             if (searchConsoleResult.error) throw new Error(searchConsoleResult.error);
@@ -1927,15 +1862,10 @@
     // Export Data to Sheet
     async function exportToSheet(dataType, data) {
         try {
-            const response = await fetch(WEB_APP_URL, {
+            const response = await fetch(`${BACKEND_URL}/api/exportToSheet`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'exportToSheet',
-                    sheetId: sheetId,
-                    dataType: dataType,
-                    data: data
-                })
+                body: JSON.stringify({ dataType, data })
             });
             const result = await response.json();
             if (result.error) throw new Error(result.error);
@@ -1946,9 +1876,8 @@
         }
     }
 
-    // Update Dashboard Tab
+    // Chart and Table Update Functions (same as previous, included for completeness)
     function updateDashboard() {
-        // Quick Stats
         const metrics = analyticsData.rows.reduce((acc, row) => {
             acc.users = (acc.users || 0) + parseInt(row.metricValues[0].value);
             acc.pageViews = (acc.pageViews || 0) + parseInt(row.metricValues[2].value);
@@ -1962,7 +1891,6 @@
         document.getElementById('avg-session').textContent = formatDuration(metrics.sessionDuration / analyticsData.rows.length);
         document.getElementById('bounce-rate').textContent = ((1 - metrics.engagementRate / analyticsData.rows.length) * 100).toFixed(1) + '%';
 
-        // Traffic Overview Chart
         const trafficData = analyticsData.rows.reduce((acc, row) => {
             const date = row.dimensionValues[0].value;
             acc[date] = acc[date] || { users: 0, pageViews: 0 };
@@ -1976,7 +1904,6 @@
             pageViews: trafficData[date].pageViews
         })));
 
-        // Top Pages Chart
         const topPages = analyticsData.rows.reduce((acc, row) => {
             const path = row.dimensionValues[1].value;
             acc[path] = (acc[path] || 0) + parseInt(row.metricValues[2].value);
@@ -1986,7 +1913,6 @@
             .sort((a, b) => b.views - a.views).slice(0, 5);
         updateTopPagesChart(sortedPages);
 
-        // Search Console Table
         const scRows = searchConsoleData.rows.slice(0, 5).map(row => ({
             query: row.keys[0],
             clicks: row.clicks,
@@ -1997,9 +1923,7 @@
         updateSearchConsoleTable(scRows);
     }
 
-    // Update Search Console Tab
     function updateSearchConsoleTab() {
-        // Quick Stats
         const scMetrics = searchConsoleData.rows.reduce((acc, row) => {
             acc.clicks = (acc.clicks || 0) + row.clicks;
             acc.impressions = (acc.impressions || 0) + row.impressions;
@@ -2013,7 +1937,6 @@
         document.getElementById('avg-ctr').textContent = (scMetrics.ctr / searchConsoleData.rows.length * 100).toFixed(1) + '%';
         document.getElementById('avg-position').textContent = (scMetrics.position / searchConsoleData.rows.length).toFixed(1);
 
-        // Clicks and Impressions Chart
         const scData = searchConsoleData.rows.reduce((acc, row) => {
             const date = row.keys[2];
             acc[date] = acc[date] || { clicks: 0, impressions: 0 };
@@ -2027,7 +1950,6 @@
             impressions: scData[date].impressions
         })));
 
-        // Top Queries Chart
         const topQueries = searchConsoleData.rows.reduce((acc, row) => {
             const query = row.keys[0];
             acc[query] = (acc[query] || 0) + row.clicks;
@@ -2037,7 +1959,6 @@
             .sort((a, b) => b.clicks - a.clicks).slice(0, 5);
         updateTopQueriesChart(sortedQueries);
 
-        // Detailed Query Table
         const detailedRows = searchConsoleData.rows.map(row => ({
             query: row.keys[0],
             clicks: row.clicks,
@@ -2049,9 +1970,7 @@
         updateDetailedQueryTable(detailedRows);
     }
 
-    // Update Analytics Tab
     function updateAnalyticsTab() {
-        // Quick Stats
         const metrics = analyticsData.rows.reduce((acc, row) => {
             acc.activeUsers = (acc.activeUsers || 0) + parseInt(row.metricValues[0].value);
             acc.sessions = (acc.sessions || 0) + parseInt(row.metricValues[1].value);
@@ -2065,7 +1984,6 @@
         document.getElementById('engagement-rate').textContent = (metrics.engagementRate / analyticsData.rows.length * 100).toFixed(1) + '%';
         document.getElementById('new-users').textContent = metrics.newUsers.toLocaleString();
 
-        // Users and Sessions Chart
         const userSessionData = analyticsData.rows.reduce((acc, row) => {
             const date = row.dimensionValues[0].value;
             acc[date] = acc[date] || { users: 0, sessions: 0 };
@@ -2079,7 +1997,6 @@
             sessions: userSessionData[date].sessions
         })));
 
-        // Traffic Sources Chart
         const trafficSources = analyticsData.rows.reduce((acc, row) => {
             const source = row.dimensionValues[2].value;
             acc[source] = (acc[source] || 0) + parseInt(row.metricValues[0].value);
@@ -2087,7 +2004,6 @@
         }, {});
         updateTrafficSourcesChart(Object.entries(trafficSources).map(([source, users]) => ({ source, users })));
 
-        // User Behavior Table
         const behaviorRows = analyticsData.rows.reduce((acc, row) => {
             const path = row.dimensionValues[1].value;
             acc[path] = acc[path] || { users: 0, sessions: 0, duration: 0, engagement: 0, count: 0 };
@@ -2107,7 +2023,6 @@
         })));
     }
 
-    // Chart Update Functions
     function updateTrafficOverviewChart(data) {
         const svg = document.querySelector('#traffic-overview-chart svg');
         const maxValue = Math.max(...data.map(d => Math.max(d.users, d.pageViews)));
@@ -2122,23 +2037,18 @@
         });
 
         svg.innerHTML = `
-            <!-- Grid Lines -->
             <line x1="50" y1="250" x2="750" y2="250" stroke="#E0E0E0" stroke-width="1" />
             <line x1="50" y1="200" x2="750" y2="200" stroke="#E0E0E0" stroke-width="1" />
             <line x1="50" y1="150" x2="750" y2="150" stroke="#E0E0E0" stroke-width="1" />
             <line x1="50" y1="100" x2="750" y2="100" stroke="#E0E0E0" stroke-width="1" />
             <line x1="50" y1="50" x2="750" y2="50" stroke="#E0E0E0" stroke-width="1" />
-            <!-- Y-axis labels -->
             <text x="40" y="250" text-anchor="end" font-size="12" fill="#757575">0</text>
             <text x="40" y="200" text-anchor="end" font-size="12" fill="#757575">${(maxValue * 0.25 / 1000).toFixed(0)}k</text>
             <text x="40" y="150" text-anchor="end" font-size="12" fill="#757575">${(maxValue * 0.5 / 1000).toFixed(0)}k</text>
             <text x="40" y="100" text-anchor="end" font-size="12" fill="#757575">${(maxValue * 0.75 / 1000).toFixed(0)}k</text>
             <text x="40" y="50" text-anchor="end" font-size="12" fill="#757575">${(maxValue / 1000).toFixed(0)}k</text>
-            <!-- X-axis labels -->
             ${data.map((d, i) => `<text x="${100 + i * step}" y="270" text-anchor="middle" font-size="12" fill="#757575">${d.date.slice(5, 10)}</text>`).join('')}
-            <!-- Line for Users -->
             <path d="M${userPoints.join(' L')}" fill="none" stroke="#6750A4" stroke-width="3" />
-            <!-- Line for Page Views -->
             <path d="M${pageViewPoints.join(' L')}" fill="none" stroke="#B58392" stroke-width="3" />
             ${data.map((d, i) => `
                 <circle cx="${100 + i * step}" cy="${250 - (d.users / maxValue * 200)}" r="5" fill="#6750A4" />
